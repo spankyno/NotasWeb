@@ -20,7 +20,6 @@
     <style>
         body { font-family: 'Inter', sans-serif; overflow: hidden; height: 100vh; margin: 0; }
         
-        /* CONTENEDOR MAESTRO DE SCROLL */
         .editor-scroller {
             display: flex;
             height: 100%;
@@ -30,10 +29,9 @@
             position: relative;
         }
 
-        /* BARRA LATERAL DE NÚMEROS */
         .line-numbers-container {
             width: 50px;
-            padding-top: 30px; /* Margen superior exacto */
+            padding-top: 30px;
             background-color: #f8fafc;
             border-right: 1px solid #e2e8f0;
             color: #cbd5e1;
@@ -41,46 +39,54 @@
             padding-right: 12px;
             font-family: 'JetBrains Mono', monospace;
             font-size: 14px;
-            line-height: 1.6; /* Debe coincidir exactamente con el texto */
+            line-height: 22.4px; /* Altura de línea exacta calculada (14 * 1.6) */
             user-select: none;
             flex-shrink: 0;
             z-index: 10;
         }
 
         .line-number-item {
-            height: 22.4px; /* 14px * 1.6 line-height */
+            height: 22.4px;
             display: block;
         }
 
-        /* CONTENEDOR DE CAPAS DE TEXTO */
         .editor-layers {
             position: relative;
             flex-grow: 1;
             min-height: 100%;
-            padding-top: 30px; /* Mismo que los números */
+            padding-top: 30px;
         }
 
-        /* ESTILOS DE FUENTE NORMALIZADOS PARA AMBAS CAPAS */
+        /* BLOQUEO DE MÉTRICAS TIPOGRÁFICAS PARA EVITAR DERIVA */
         .editor-shared {
             margin: 0 !important;
             padding: 0 30px 30px 20px !important;
             border: 0 !important;
             font-family: 'JetBrains Mono', monospace !important;
             font-size: 14px !important;
-            line-height: 1.6 !important;
+            line-height: 22.4px !important;
             tab-size: 4 !important;
             -moz-tab-size: 4 !important;
             box-sizing: border-box !important;
             width: 100% !important;
             position: absolute !important;
-            top: 30px !important; /* Ajuste manual del top para alinear con padding-top del padre */
+            top: 30px !important;
             left: 0 !important;
             overflow: hidden !important;
             display: block !important;
             white-space: pre !important;
+            
+            /* Propiedades críticas anti-deriva */
+            font-kerning: none !important;
+            font-variant-ligatures: none !important;
+            font-feature-settings: "liga" 0, "calt" 0 !important;
+            letter-spacing: 0px !important;
+            word-spacing: 0px !important;
+            -webkit-font-smoothing: none !important;
+            -moz-osx-font-smoothing: grayscale !important;
+            text-rendering: optimizeSpeed !important;
         }
 
-        /* CAPA DE ENTRADA (TRANSPARENTE PARA MOSTRAR RESALTADO) */
         .editor-textarea {
             z-index: 2;
             color: transparent !important;
@@ -91,14 +97,12 @@
             -webkit-text-fill-color: transparent;
         }
 
-        /* CORRECCIÓN DE SELECCIÓN: El texto se vuelve visible al ser seleccionado */
         .editor-textarea::selection {
-            background-color: rgba(79, 70, 229, 0.2) !important;
+            background-color: rgba(79, 70, 229, 0.15) !important;
             color: #000 !important;
             -webkit-text-fill-color: #000 !important;
         }
 
-        /* CAPA DE RESALTADO (VISUAL) */
         .editor-pre {
             z-index: 1;
             pointer-events: none;
@@ -106,14 +110,11 @@
             background: transparent !important;
         }
 
-        /* CONFIGURACIÓN DE AJUSTE DE LÍNEA (WORD WRAP) */
         .is-wrapped .editor-shared {
             white-space: pre-wrap !important;
             word-wrap: break-word !important;
-            word-break: break-all !important;
         }
 
-        /* RESET DE PRISM */
         code[class*="language-"], pre[class*="language-"] {
             font-family: inherit !important;
             font-size: inherit !important;
@@ -124,15 +125,13 @@
             text-shadow: none !important;
         }
 
-        /* COLORES DE RESALTADO */
-        .token.comment { color: #94a3b8; font-style: italic; }
+        /* Colores del resaltado */
+        .token.comment { color: #94a3b8; }
         .token.string { color: #059669; }
         .token.keyword { color: #e11d48; font-weight: 600; }
         .token.function { color: #7c3aed; }
         .token.number { color: #2563eb; }
-        .token.operator { color: #475569; }
 
-        /* SCROLLBARS */
         .editor-scroller::-webkit-scrollbar { width: 14px; height: 14px; }
         .editor-scroller::-webkit-scrollbar-track { background: #f8fafc; }
         .editor-scroller::-webkit-scrollbar-thumb { 
