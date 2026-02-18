@@ -24,7 +24,10 @@ const Editor: React.FC<EditorProps> = ({ note, showLineNumbers, onToggleLineNumb
     setContent(note.content);
     setTitle(note.title);
     setHistory([note.content]);
-    if (editorRef.current) editorRef.current.scrollTop = 0;
+    if (editorRef.current) {
+        editorRef.current.scrollTop = 0;
+        if (lineNumbersRef.current) lineNumbersRef.current.scrollTop = 0;
+    }
   }, [note.id]);
 
   // Sincronizar el scroll de los números de línea con el editor
@@ -62,11 +65,12 @@ const Editor: React.FC<EditorProps> = ({ note, showLineNumbers, onToggleLineNumb
     URL.revokeObjectURL(url);
   };
 
+  // Cálculo preciso de líneas para la numeración
   const linesCount = content.split('\n').length;
 
   return (
     <div className="flex flex-col h-full bg-white overflow-hidden">
-      {/* Barra de Herramientas (4 botones limpios) */}
+      {/* Barra de Herramientas */}
       <div className="flex items-center justify-between px-8 py-4 border-b border-slate-100 shrink-0 z-30 bg-white shadow-sm">
         <div className="flex-1 min-w-0 mr-4">
           {isEditingTitle ? (
@@ -129,7 +133,7 @@ const Editor: React.FC<EditorProps> = ({ note, showLineNumbers, onToggleLineNumb
         </div>
       </div>
 
-      {/* Área del Editor de Capa Única */}
+      {/* Área del Editor */}
       <div className="flex-1 relative bg-white overflow-hidden">
         <div className="editor-container">
           {showLineNumbers && (
@@ -148,11 +152,11 @@ const Editor: React.FC<EditorProps> = ({ note, showLineNumbers, onToggleLineNumb
             onScroll={handleScroll}
             spellCheck={false}
             autoFocus
-            placeholder="Empieza a escribir tus pensamientos..."
+            placeholder="Empieza a escribir..."
           />
         </div>
 
-        {/* Status Bar Estática */}
+        {/* Status Bar */}
         <div className="status-pill">
           <span>{content.length} CHARS</span>
           <span className="mx-3 opacity-20">|</span>
