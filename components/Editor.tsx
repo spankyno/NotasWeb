@@ -19,27 +19,26 @@ const Editor: React.FC<EditorProps> = ({ note, showLineNumbers, onToggleLineNumb
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const preRef = useRef<HTMLPreElement>(null);
 
-  // Sincronizar estado local con la nota activa
   useEffect(() => {
     setContent(note.content);
     setTitle(note.title);
     setHistory([note.content]);
   }, [note.id]);
 
-  // Manejar altura dinámica y resaltado
+  // Sincronización de altura y resaltado
   useEffect(() => {
     if (textareaRef.current && preRef.current) {
-      textareaRef.current.style.height = '0px';
+      textareaRef.current.style.height = 'auto';
       const scrollHeight = textareaRef.current.scrollHeight;
-      // Altura mínima para que el editor siempre sea usable
-      const finalHeight = Math.max(scrollHeight, 600);
-      textareaRef.current.style.height = `${finalHeight}px`;
-      preRef.current.style.height = `${finalHeight}px`;
+      const height = Math.max(scrollHeight, 600);
+      textareaRef.current.style.height = `${height}px`;
+      preRef.current.style.height = `${height}px`;
     }
     
-    // Disparar PrismJS
     const prism = (window as any).Prism;
-    if (prism) prism.highlightAll();
+    if (prism) {
+      prism.highlightAll();
+    }
   }, [content, note.id]);
 
   const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -70,19 +69,17 @@ const Editor: React.FC<EditorProps> = ({ note, showLineNumbers, onToggleLineNumb
     URL.revokeObjectURL(url);
   };
 
-  // Cálculo de líneas para la barra lateral
-  // Usamos un div invisible o una aproximación ya que con pre-wrap las líneas visuales pueden ser más que los \n
   const linesCount = content.split('\n').length;
 
   return (
     <div className="flex flex-col h-full bg-white overflow-hidden">
-      {/* Barra de Herramientas (4 botones) */}
-      <div className="flex items-center justify-between px-6 py-3 border-b border-slate-100 shrink-0 z-30 bg-white shadow-sm">
+      {/* Cabecera */}
+      <div className="flex items-center justify-between px-8 py-4 border-b border-slate-100 shrink-0 z-30 bg-white shadow-sm">
         <div className="flex-1 min-w-0 mr-4">
           {isEditingTitle ? (
             <input
               autoFocus
-              className="text-lg font-bold text-slate-900 border-b-2 border-indigo-600 outline-none w-full bg-transparent"
+              className="text-xl font-bold text-slate-900 border-b-2 border-indigo-600 outline-none w-full bg-transparent"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               onBlur={() => {
@@ -93,7 +90,7 @@ const Editor: React.FC<EditorProps> = ({ note, showLineNumbers, onToggleLineNumb
             />
           ) : (
             <h2 
-              className="text-lg font-bold text-slate-900 truncate cursor-pointer hover:text-indigo-600 transition-colors"
+              className="text-xl font-bold text-slate-900 truncate cursor-pointer hover:text-indigo-600 transition-colors"
               onClick={() => setIsEditingTitle(true)}
             >
               {title}
@@ -101,50 +98,29 @@ const Editor: React.FC<EditorProps> = ({ note, showLineNumbers, onToggleLineNumb
           )}
         </div>
 
-        <div className="flex items-center space-x-1">
-          {/* 1. DESHACER */}
-          <button 
-            onClick={handleUndo} 
-            disabled={history.length === 0} 
-            className={`p-2 rounded-lg transition-colors ${history.length === 0 ? 'text-slate-200' : 'text-slate-500 hover:bg-slate-50 hover:text-indigo-600'}`} 
-            title="Deshacer"
-          >
+        <div className="flex items-center space-x-2">
+          <button onClick={handleUndo} disabled={history.length === 0} className={`p-2 rounded-lg transition-colors ${history.length === 0 ? 'text-slate-200' : 'text-slate-500 hover:bg-slate-50 hover:text-indigo-600'}`} title="Deshacer">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l5 5m-5-5l5-5" /></svg>
           </button>
           
-          <div className="w-px h-6 bg-slate-100 mx-2"></div>
+          <div className="w-px h-6 bg-slate-100 mx-1"></div>
 
-          {/* 2. NÚMEROS DE LÍNEA */}
-          <button 
-            onClick={onToggleLineNumbers} 
-            className={`p-2 rounded-lg transition-all ${showLineNumbers ? 'bg-indigo-50 text-indigo-600' : 'text-slate-500 hover:bg-slate-50'}`} 
-            title="Mostrar/Ocultar números"
-          >
+          <button onClick={onToggleLineNumbers} className={`p-2 rounded-lg transition-all ${showLineNumbers ? 'bg-indigo-50 text-indigo-600' : 'text-slate-500 hover:bg-slate-50'}`} title="Números de línea">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" /></svg>
           </button>
 
-          {/* 3. DESCARGAR */}
-          <button 
-            onClick={downloadNote} 
-            className="p-2 text-slate-500 hover:bg-slate-50 hover:text-indigo-600 rounded-lg transition-colors" 
-            title="Descargar como .txt"
-          >
+          <button onClick={downloadNote} className="p-2 text-slate-500 hover:bg-slate-50 hover:text-indigo-600 rounded-lg transition-colors" title="Descargar .txt">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
           </button>
 
-          {/* 4. ELIMINAR */}
-          <button 
-            onClick={() => onDelete(note.id)} 
-            className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" 
-            title="Eliminar esta nota"
-          >
+          <button onClick={() => onDelete(note.id)} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Eliminar nota">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
           </button>
         </div>
       </div>
 
-      {/* Editor Principal (Ajuste de línea siempre activo) */}
-      <div className="flex-1 relative overflow-hidden bg-white">
+      {/* Editor Scroller */}
+      <div className="flex-1 relative bg-white overflow-hidden">
         <div className="editor-scroller">
           {showLineNumbers && (
             <div className="line-numbers-sidebar">
@@ -155,12 +131,12 @@ const Editor: React.FC<EditorProps> = ({ note, showLineNumbers, onToggleLineNumb
           )}
           
           <div className="editor-workspace">
-            {/* CAPA INFERIOR: VISUALIZACIÓN */}
+            {/* Capa de resaltado (inferior) */}
             <pre className="editor-pre editor-layer" aria-hidden="true">
               <code className="language-none">{content + (content.endsWith('\n') ? ' ' : '')}</code>
             </pre>
 
-            {/* CAPA SUPERIOR: EDICIÓN */}
+            {/* Capa de edición (superior) */}
             <textarea
               ref={textareaRef}
               className="editor-textarea editor-layer"
@@ -170,15 +146,17 @@ const Editor: React.FC<EditorProps> = ({ note, showLineNumbers, onToggleLineNumb
               autoCapitalize="none"
               autoComplete="off"
               autoCorrect="off"
-              placeholder="Empieza a escribir..."
+              placeholder="Escribe aquí..."
             />
           </div>
         </div>
 
-        {/* Footer info (estático) */}
-        <div className="absolute bottom-6 left-6 bg-slate-900/5 backdrop-blur-sm px-3 py-1 rounded-full text-[10px] font-bold text-slate-400 z-40 flex items-center space-x-3">
+        {/* Info flotante */}
+        <div className="absolute bottom-6 right-8 bg-slate-900 px-4 py-1.5 rounded-full text-[10px] font-bold text-white z-40 flex items-center space-x-4 shadow-lg pointer-events-none">
+          <span className="opacity-60 uppercase tracking-widest">Ajuste de línea: ON</span>
+          <span className="w-px h-3 bg-white/20"></span>
           <span>{content.length} CHARS</span>
-          <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
+          <span className="w-px h-3 bg-white/20"></span>
           <span>{linesCount} LINES</span>
         </div>
       </div>
