@@ -20,6 +20,7 @@
     <style>
         body { font-family: 'Inter', sans-serif; overflow: hidden; height: 100vh; margin: 0; }
         
+        /* SCROLLER MAESTRO */
         .editor-scroller {
             display: flex;
             height: 100%;
@@ -29,117 +30,106 @@
             position: relative;
         }
 
-        .line-numbers-container {
-            width: 50px;
+        /* BARRA DE NÚMEROS */
+        .line-numbers-sidebar {
+            width: 45px;
             padding-top: 30px;
             background-color: #f8fafc;
-            border-right: 1px solid #e2e8f0;
+            border-right: 1px solid #f1f5f9;
             color: #cbd5e1;
             text-align: right;
-            padding-right: 12px;
+            padding-right: 10px;
             font-family: 'JetBrains Mono', monospace;
-            font-size: 14px;
-            line-height: 22.4px; /* Altura de línea exacta calculada (14 * 1.6) */
+            font-size: 13px;
+            line-height: 24px; /* Altura de línea fija para matching */
             user-select: none;
             flex-shrink: 0;
             z-index: 10;
         }
 
-        .line-number-item {
-            height: 22.4px;
-            display: block;
-        }
-
-        .editor-layers {
+        /* CONTENEDOR DE CAPAS */
+        .editor-workspace {
             position: relative;
             flex-grow: 1;
             min-height: 100%;
-            padding-top: 30px;
+            padding: 30px 30px 100px 20px; /* Padding controlado aquí */
         }
 
-        /* BLOQUEO DE MÉTRICAS TIPOGRÁFICAS PARA EVITAR DERIVA */
-        .editor-shared {
+        /* ESTILOS COMPARTIDOS (MÉTRICAS RÍGIDAS) */
+        .editor-layer {
             margin: 0 !important;
-            padding: 0 30px 30px 20px !important;
+            padding: 0 !important; /* El padding lo da el padre */
             border: 0 !important;
             font-family: 'JetBrains Mono', monospace !important;
-            font-size: 14px !important;
-            line-height: 22.4px !important;
+            font-size: 15px !important;
+            line-height: 24px !important;
             tab-size: 4 !important;
-            -moz-tab-size: 4 !important;
             box-sizing: border-box !important;
             width: 100% !important;
             position: absolute !important;
             top: 30px !important;
-            left: 0 !important;
+            left: 20px !important;
             overflow: hidden !important;
             display: block !important;
-            white-space: pre !important;
             
-            /* Propiedades críticas anti-deriva */
+            /* ANTI-DERIVA DEL CURSOR */
             font-kerning: none !important;
             font-variant-ligatures: none !important;
             font-feature-settings: "liga" 0, "calt" 0 !important;
             letter-spacing: 0px !important;
             word-spacing: 0px !important;
             -webkit-font-smoothing: none !important;
-            -moz-osx-font-smoothing: grayscale !important;
             text-rendering: optimizeSpeed !important;
         }
 
+        /* CAPA DE ENTRADA (TRANSPARENTE) */
         .editor-textarea {
             z-index: 2;
             color: transparent !important;
             background: transparent !important;
-            caret-color: #000;
+            caret-color: #4f46e5;
             resize: none;
             outline: none;
             -webkit-text-fill-color: transparent;
         }
 
+        /* SELECCIÓN VISIBLE */
         .editor-textarea::selection {
-            background-color: rgba(79, 70, 229, 0.15) !important;
-            color: #000 !important;
-            -webkit-text-fill-color: #000 !important;
+            background-color: rgba(79, 70, 229, 0.2) !important;
+            color: #1e293b !important;
+            -webkit-text-fill-color: #1e293b !important;
         }
 
+        /* CAPA DE RESALTADO */
         .editor-pre {
             z-index: 1;
             pointer-events: none;
-            color: #1e293b;
+            color: #334155;
             background: transparent !important;
+            white-space: pre !important;
         }
 
-        .is-wrapped .editor-shared {
+        /* AJUSTE DE LÍNEA */
+        .wrap-on .editor-layer {
             white-space: pre-wrap !important;
             word-wrap: break-word !important;
         }
 
-        code[class*="language-"], pre[class*="language-"] {
-            font-family: inherit !important;
-            font-size: inherit !important;
-            line-height: inherit !important;
-            background: none !important;
-            padding: 0 !important;
-            color: inherit !important;
-            text-shadow: none !important;
-        }
-
-        /* Colores del resaltado */
+        /* COLORES PRISM (OPTIMIZADOS) */
         .token.comment { color: #94a3b8; }
-        .token.string { color: #059669; }
+        .token.string { color: #0891b2; }
         .token.keyword { color: #e11d48; font-weight: 600; }
         .token.function { color: #7c3aed; }
         .token.number { color: #2563eb; }
 
-        .editor-scroller::-webkit-scrollbar { width: 14px; height: 14px; }
+        /* SCROLLBAR */
+        .editor-scroller::-webkit-scrollbar { width: 12px; height: 12px; }
         .editor-scroller::-webkit-scrollbar-track { background: #f8fafc; }
         .editor-scroller::-webkit-scrollbar-thumb { 
             background: #e2e8f0; 
-            border: 4px solid #f8fafc; 
+            border: 3px solid #f8fafc; 
             border-radius: 10px; 
         }
-        .editor-scroller::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
     </style>
 <script type="importmap">
 {

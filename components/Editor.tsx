@@ -27,15 +27,14 @@ const Editor: React.FC<EditorProps> = ({ note, showLineNumbers, onToggleLineNumb
   }, [note.id]);
 
   useEffect(() => {
-    // Ajustar altura para que el scroll lo maneje el contenedor .editor-scroller
     if (textareaRef.current && preRef.current) {
-      textareaRef.current.style.height = 'auto';
-      const height = textareaRef.current.scrollHeight;
-      textareaRef.current.style.height = `${height}px`;
-      preRef.current.style.height = `${height}px`;
+      textareaRef.current.style.height = '0px';
+      const scrollHeight = textareaRef.current.scrollHeight;
+      const finalHeight = Math.max(scrollHeight, 500);
+      textareaRef.current.style.height = `${finalHeight}px`;
+      preRef.current.style.height = `${finalHeight}px`;
     }
     
-    // Resaltar sintaxis
     const prism = (window as any).Prism;
     if (prism) prism.highlightAll();
   }, [content, isWordWrap, note.id]);
@@ -68,13 +67,12 @@ const Editor: React.FC<EditorProps> = ({ note, showLineNumbers, onToggleLineNumb
     URL.revokeObjectURL(url);
   };
 
-  const lines = content.split('\n');
-  const linesCount = lines.length;
+  const linesCount = content.split('\n').length;
 
   return (
     <div className="flex flex-col h-full bg-white overflow-hidden">
-      {/* Herramientas */}
-      <div className="flex items-center justify-between px-6 py-3 border-b border-slate-100 bg-white shrink-0 z-30">
+      {/* Barra de Herramientas */}
+      <div className="flex items-center justify-between px-6 py-3 border-b border-slate-100 shrink-0 z-30 bg-white">
         <div className="flex-1 min-w-0 mr-4">
           {isEditingTitle ? (
             <input
@@ -90,7 +88,7 @@ const Editor: React.FC<EditorProps> = ({ note, showLineNumbers, onToggleLineNumb
             />
           ) : (
             <h2 
-              className="text-lg font-bold text-slate-900 truncate cursor-pointer hover:text-indigo-600"
+              className="text-lg font-bold text-slate-900 truncate cursor-pointer hover:text-indigo-600 transition-colors"
               onClick={() => setIsEditingTitle(true)}
             >
               {title}
@@ -99,50 +97,58 @@ const Editor: React.FC<EditorProps> = ({ note, showLineNumbers, onToggleLineNumb
         </div>
 
         <div className="flex items-center space-x-1">
-          <button onClick={handleUndo} disabled={history.length === 0} className={`p-2 rounded-lg transition-colors ${history.length === 0 ? 'text-slate-200' : 'text-slate-500 hover:bg-amber-50 hover:text-amber-600'}`} title="Deshacer">
+          <button onClick={handleUndo} disabled={history.length === 0} className={`p-2 rounded-lg transition-colors ${history.length === 0 ? 'text-slate-200' : 'text-slate-500 hover:bg-slate-50 hover:text-indigo-600'}`} title="Deshacer">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l5 5m-5-5l5-5" /></svg>
           </button>
-          <div className="w-px h-6 bg-slate-100 mx-1"></div>
-          <button onClick={() => setIsWordWrap(!isWordWrap)} className={`p-2 rounded-lg transition-colors ${isWordWrap ? 'bg-indigo-50 text-indigo-600' : 'text-slate-500 hover:bg-slate-100'}`} title="Ajuste de línea">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h10M4 18h16" /></svg>
+          
+          <div className="w-px h-6 bg-slate-100 mx-2"></div>
+          
+          {/* NUEVO ICONO PARA WORD WRAP */}
+          <button onClick={() => setIsWordWrap(!isWordWrap)} className={`p-2 rounded-lg transition-all ${isWordWrap ? 'bg-indigo-50 text-indigo-600 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`} title="Ajuste de línea">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a4 4 0 010 8H7m0 0l3-3m-3 3l3 3" />
+            </svg>
           </button>
-          <button onClick={onToggleLineNumbers} className={`p-2 rounded-lg transition-colors ${showLineNumbers ? 'bg-indigo-50 text-indigo-600' : 'text-slate-500 hover:bg-slate-100'}`} title="Números de línea">
+
+          <button onClick={onToggleLineNumbers} className={`p-2 rounded-lg transition-all ${showLineNumbers ? 'bg-indigo-50 text-indigo-600 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`} title="Números de línea">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" /></svg>
           </button>
-          <button onClick={downloadNote} className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors" title="Descargar">
+
+          <button onClick={downloadNote} className="p-2 text-slate-500 hover:bg-slate-50 hover:text-indigo-600 rounded-lg transition-colors" title="Descargar nota">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
           </button>
-          <button onClick={() => onDelete(note.id)} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Eliminar">
+
+          <button onClick={() => onDelete(note.id)} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Eliminar nota">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
           </button>
         </div>
       </div>
 
-      {/* Editor Principal */}
-      <div className={`flex-1 relative overflow-hidden ${isWordWrap ? 'is-wrapped' : ''}`}>
+      {/* Área de Edición Reconstruida */}
+      <div className={`flex-1 relative overflow-hidden ${isWordWrap ? 'wrap-on' : 'wrap-off'}`}>
         <div className="editor-scroller">
           {showLineNumbers && (
-            <div className="line-numbers-container">
+            <div className="line-numbers-sidebar">
               {Array.from({ length: linesCount }).map((_, i) => (
-                <span key={i} className="line-number-item">{i + 1}</span>
+                <div key={i} style={{height: '24px'}}>{i + 1}</div>
               ))}
             </div>
           )}
           
-          <div className="editor-layers">
-            {/* Capa de Visualización (Resaltado) */}
-            <pre className="editor-pre editor-shared" aria-hidden="true">
-              <code>{content + (content.endsWith('\n') ? ' ' : '')}</code>
+          <div className="editor-workspace">
+            {/* CAPA VISUAL (PRISM) */}
+            <pre className="editor-pre editor-layer" aria-hidden="true">
+              <code className="language-none">{content + (content.endsWith('\n') ? ' ' : '')}</code>
             </pre>
 
-            {/* Capa de Edición (Interactiva) */}
+            {/* CAPA DE ENTRADA (TRANSPARENTE) */}
             <textarea
               ref={textareaRef}
-              className="editor-textarea editor-shared"
+              className="editor-textarea editor-layer"
               value={content}
               onChange={handleContentChange}
               spellCheck={false}
-              autoCapitalize="off"
+              autoCapitalize="none"
               autoComplete="off"
               autoCorrect="off"
               placeholder="Escribe algo aquí..."
@@ -150,9 +156,13 @@ const Editor: React.FC<EditorProps> = ({ note, showLineNumbers, onToggleLineNumb
           </div>
         </div>
 
-        {/* Info flotante */}
-        <div className="absolute bottom-6 right-8 bg-white/90 backdrop-blur px-3 py-1.5 rounded-full border border-slate-200 shadow-lg text-[10px] font-bold text-slate-500 z-40 pointer-events-none tracking-tight">
-          {content.length} CARACTERES | {linesCount} LÍNEAS | {isWordWrap ? "AJUSTADO" : "ORIGINAL"}
+        {/* Status Bar Flotante */}
+        <div className="absolute bottom-6 right-8 bg-white/90 backdrop-blur-md px-4 py-2 rounded-full border border-slate-200 shadow-xl text-[10px] font-bold text-slate-500 z-40 pointer-events-none tracking-widest flex items-center space-x-4">
+          <span>{content.length} CHARS</span>
+          <span className="w-px h-3 bg-slate-300"></span>
+          <span>{linesCount} LINES</span>
+          <span className="w-px h-3 bg-slate-300"></span>
+          <span className="text-indigo-600">{isWordWrap ? "WRAP ON" : "WRAP OFF"}</span>
         </div>
       </div>
     </div>
