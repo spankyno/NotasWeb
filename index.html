@@ -5,138 +5,132 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QuickNotes Pro</title>
-    <!-- SEO and Metadata -->
-    <meta name="google-site-verification" content="MEiDmnJOvnWITHUi0HCLxuoulOEm0oTM4fwQMugxoyY" />
     <meta name="author" content="Aitor Sánchez Gutiérrez" />
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%234f46e5'/><path d='M30 30h40M30 50h40M30 70h25' stroke='white' stroke-width='8' stroke-linecap='round'/></svg>" />
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     
     <!-- PrismJS -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" rel="stylesheet" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-css.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markup.min.js"></script>
 
     <style>
-        body { font-family: 'Inter', sans-serif; margin: 0; padding: 0; height: 100vh; }
-        .mono-font { font-family: 'JetBrains Mono', monospace; }
-
-        .editor-wrapper {
-            position: relative;
-            flex: 1;
-            height: 100%;
-            background: white;
+        body { font-family: 'Inter', sans-serif; overflow: hidden; height: 100vh; }
+        
+        /* EL CORAZÓN DEL EDITOR */
+        .editor-view {
             display: flex;
+            height: 100%;
+            width: 100%;
+            background: #ffffff;
+            overflow: auto; /* Scroll maestro */
+            position: relative;
         }
 
-        /* CAPAS DE TEXTO: Deben ser IDÉNTICAS en cada propiedad de fuente y espaciado */
-        .shared-editor-styles {
+        .line-numbers-sidebar {
+            width: 50px;
+            background-color: #f8fafc;
+            border-right: 1px solid #e2e8f0;
+            color: #94a3b8;
+            padding-top: 24px;
+            text-align: right;
+            padding-right: 12px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            line-height: 24px;
+            user-select: none;
+            flex-shrink: 0;
+        }
+
+        .text-layers-container {
+            position: relative;
+            flex-grow: 1;
+            min-height: 100%;
+        }
+
+        /* ESTILOS COMPARTIDOS OBLIGATORIOS */
+        .editor-base {
             margin: 0 !important;
+            padding: 24px !important;
             border: 0 !important;
-            padding: 1.5rem !important;
-            font-size: 14px !important;
-            line-height: 1.625rem !important; /* Altura de línea fija para sincronización */
             font-family: 'JetBrains Mono', monospace !important;
+            font-size: 15px !important;
+            line-height: 24px !important; /* Altura de línea FIJA en píxeles */
             tab-size: 4 !important;
-            -moz-tab-size: 4 !important;
+            white-space: pre !important;
+            word-wrap: normal !important;
             box-sizing: border-box !important;
             width: 100% !important;
-            height: 100% !important;
+            min-height: 100% !important;
             position: absolute !important;
             top: 0 !important;
             left: 0 !important;
+            overflow: hidden !important; /* El scroll lo maneja el padre .editor-view */
+            display: block !important;
         }
 
-        /* TEXTAREA: Capa interactiva superior */
+        /* CAPA 1: TEXTAREA (INTERACTIVA) */
         .editor-textarea {
+            z-index: 2;
             color: transparent !important;
             background: transparent !important;
-            caret-color: #000 !important;
-            z-index: 2 !important;
-            resize: none !important;
-            outline: none !important;
-            overflow: auto !important; /* Barras de scroll siempre habilitadas si exceden */
-            white-space: pre !important; /* Por defecto original */
+            caret-color: #000;
+            resize: none;
+            outline: none;
+            -webkit-text-fill-color: transparent;
         }
-        
-        /* Asegurar que la selección se vea (algunos navegadores ocultan selección si el color es transparent) */
+
+        /* Forzar que la selección sea visible a pesar del transparent */
         .editor-textarea::selection {
             background-color: rgba(79, 70, 229, 0.2) !important;
-            color: transparent !important;
+            color: #000 !important; /* El texto seleccionado se vuelve negro */
+            -webkit-text-fill-color: #000 !important;
         }
 
-        /* PRE/CODE: Capa visual inferior */
+        /* CAPA 2: RESALTADO (VISUAL) */
         .editor-highlight {
-            z-index: 1 !important;
-            pointer-events: none !important;
-            background-color: white !important;
-            color: #000 !important;
-            overflow: hidden !important; /* Sincronizado por JavaScript */
-            white-space: pre !important;
+            z-index: 1;
+            pointer-events: none;
+            color: #000; /* Texto base siempre NEGRO */
         }
 
-        /* CONFIGURACIÓN DE AJUSTE DE LÍNEA (WORD WRAP) */
-        .wrap-on {
+        /* AJUSTE DE LÍNEA (WORD WRAP) */
+        .wrap-enabled .editor-base {
             white-space: pre-wrap !important;
             word-wrap: break-word !important;
-            overflow-x: hidden !important; /* No hay scroll horizontal en modo ajustado */
-        }
-        .wrap-off {
-            white-space: pre !important;
-            word-wrap: normal !important;
         }
 
-        /* ESPACIADO PARA NÚMEROS DE LÍNEA */
-        .with-line-numbers .editor-textarea, 
-        .with-line-numbers .editor-highlight {
-            padding-left: 4.5rem !important;
-        }
-
-        /* AJUSTES PRISM PARA ALINEACIÓN PIXEL-PERFECT */
+        /* RESET DE PRISM */
         code[class*="language-"], pre[class*="language-"] {
-            margin: 0 !important;
-            padding: 0 !important;
-            background: none !important;
-            text-shadow: none !important;
             font-family: inherit !important;
             font-size: inherit !important;
             line-height: inherit !important;
-            white-space: inherit !important;
-            word-break: inherit !important;
+            background: none !important;
+            padding: 0 !important;
             color: inherit !important;
+            text-shadow: none !important;
         }
 
-        /* BARRAS DE DESPLAZAMIENTO VISIBLES */
-        .editor-textarea::-webkit-scrollbar {
-            width: 12px;
-            height: 12px;
-        }
-        .editor-textarea::-webkit-scrollbar-track {
-            background: #f1f5f9;
-        }
-        .editor-textarea::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 6px;
-            border: 3px solid #f1f5f9;
-        }
-        .editor-textarea::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
-        }
-
-        /* Resaltado de sintaxis */
-        .token.comment { color: #6a737d; font-style: italic; }
+        /* COLORES DE RESALTADO SOBRE BLANCO (ALTO CONTRASTE) */
+        .token.comment { color: #6a737d; }
         .token.string { color: #032f62; }
-        .token.keyword { color: #d73a49; font-weight: 600; }
+        .token.keyword { color: #d73a49; font-weight: bold; }
         .token.function { color: #6f42c1; }
         .token.number { color: #005cc5; }
         .token.operator { color: #d73a49; }
-        .token.tag { color: #22863a; }
-        .token.attr-name { color: #6f42c1; }
+
+        /* SCROLLBARS */
+        .editor-view::-webkit-scrollbar { width: 14px; height: 14px; }
+        .editor-view::-webkit-scrollbar-track { background: #f1f5f9; }
+        .editor-view::-webkit-scrollbar-thumb { 
+            background: #cbd5e1; 
+            border: 4px solid #f1f5f9; 
+            border-radius: 10px; 
+        }
+        .editor-view::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
 <script type="importmap">
 {
@@ -150,7 +144,7 @@
 </script>
 <link rel="stylesheet" href="/index.css">
 </head>
-<body class="bg-slate-50 text-slate-900">
+<body class="bg-slate-50">
     <div id="root"></div>
 <script type="module" src="/index.tsx"></script>
 </body>
