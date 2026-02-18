@@ -20,17 +20,18 @@
     <style>
         body { font-family: 'Inter', sans-serif; overflow: hidden; height: 100vh; margin: 0; }
         
-        /* SCROLLER MAESTRO */
+        /* SCROLLER ÚNICO (SOLO VERTICAL) */
         .editor-scroller {
             display: flex;
             height: 100%;
             width: 100%;
-            overflow: auto;
+            overflow-y: auto;
+            overflow-x: hidden; /* Prohibido el scroll horizontal */
             background: #ffffff;
             position: relative;
         }
 
-        /* BARRA DE NÚMEROS */
+        /* BARRA LATERAL DE NÚMEROS */
         .line-numbers-sidebar {
             width: 45px;
             padding-top: 30px;
@@ -41,24 +42,24 @@
             padding-right: 10px;
             font-family: 'JetBrains Mono', monospace;
             font-size: 13px;
-            line-height: 24px; /* Altura de línea fija para matching */
+            line-height: 24px; /* Altura de línea idéntica al texto */
             user-select: none;
             flex-shrink: 0;
             z-index: 10;
         }
 
-        /* CONTENEDOR DE CAPAS */
+        /* ÁREA DE TRABAJO */
         .editor-workspace {
             position: relative;
             flex-grow: 1;
             min-height: 100%;
-            padding: 30px 30px 100px 20px; /* Padding controlado aquí */
+            padding: 30px 30px 100px 20px;
         }
 
-        /* ESTILOS COMPARTIDOS (MÉTRICAS RÍGIDAS) */
+        /* NORMALIZACIÓN TOTAL DE MÉTRICAS (PREVENIR DERIVA) */
         .editor-layer {
             margin: 0 !important;
-            padding: 0 !important; /* El padding lo da el padre */
+            padding: 0 !important;
             border: 0 !important;
             font-family: 'JetBrains Mono', monospace !important;
             font-size: 15px !important;
@@ -71,21 +72,22 @@
             left: 20px !important;
             overflow: hidden !important;
             display: block !important;
+            white-space: pre-wrap !important; /* Ajuste siempre activo */
+            word-wrap: break-word !important;
             
-            /* ANTI-DERIVA DEL CURSOR */
+            /* BLOQUEO DE RENDERIZADO SUBPÍXEL */
             font-kerning: none !important;
             font-variant-ligatures: none !important;
-            font-feature-settings: "liga" 0, "calt" 0 !important;
             letter-spacing: 0px !important;
-            word-spacing: 0px !important;
-            -webkit-font-smoothing: none !important;
+            -webkit-font-smoothing: antialiased !important;
+            -moz-osx-font-smoothing: grayscale !important;
             text-rendering: optimizeSpeed !important;
         }
 
-        /* CAPA DE ENTRADA (TRANSPARENTE) */
+        /* CAPA DE TEXTAREA (CAPA SUPERIOR) */
         .editor-textarea {
             z-index: 2;
-            color: transparent !important;
+            color: transparent !important; /* Invisible por defecto para ver Prism */
             background: transparent !important;
             caret-color: #4f46e5;
             resize: none;
@@ -93,42 +95,36 @@
             -webkit-text-fill-color: transparent;
         }
 
-        /* SELECCIÓN VISIBLE */
+        /* SOLUCIÓN AL TEXTO FANTASMA: 
+           Al seleccionar, el texto se vuelve opaco y sólido para tapar la capa inferior */
         .editor-textarea::selection {
-            background-color: rgba(79, 70, 229, 0.2) !important;
-            color: #1e293b !important;
+            background-color: #dbeafe !important; /* Azul claro suave */
+            color: #1e293b !important; /* Texto sólido al seleccionar */
             -webkit-text-fill-color: #1e293b !important;
         }
 
-        /* CAPA DE RESALTADO */
+        /* CAPA DE RESALTADO (CAPA INFERIOR) */
         .editor-pre {
             z-index: 1;
             pointer-events: none;
             color: #334155;
             background: transparent !important;
-            white-space: pre !important;
         }
 
-        /* AJUSTE DE LÍNEA */
-        .wrap-on .editor-layer {
-            white-space: pre-wrap !important;
-            word-wrap: break-word !important;
-        }
-
-        /* COLORES PRISM (OPTIMIZADOS) */
-        .token.comment { color: #94a3b8; }
+        /* COLORES DE RESALTADO PRISM */
+        .token.comment { color: #94a3b8; font-style: italic; }
         .token.string { color: #0891b2; }
         .token.keyword { color: #e11d48; font-weight: 600; }
         .token.function { color: #7c3aed; }
         .token.number { color: #2563eb; }
 
-        /* SCROLLBAR */
-        .editor-scroller::-webkit-scrollbar { width: 12px; height: 12px; }
-        .editor-scroller::-webkit-scrollbar-track { background: #f8fafc; }
+        /* SCROLLBAR PERSONALIZADA */
+        .editor-scroller::-webkit-scrollbar { width: 10px; }
+        .editor-scroller::-webkit-scrollbar-track { background: transparent; }
         .editor-scroller::-webkit-scrollbar-thumb { 
             background: #e2e8f0; 
-            border: 3px solid #f8fafc; 
-            border-radius: 10px; 
+            border-radius: 10px;
+            border: 2px solid #ffffff;
         }
     </style>
 <script type="importmap">
