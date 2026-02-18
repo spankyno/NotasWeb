@@ -15,6 +15,7 @@ const Editor: React.FC<EditorProps> = ({ note, showLineNumbers, onToggleLineNumb
   const [title, setTitle] = useState(note.title);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date>(new Date(note.updated_at));
+  const [isWordWrap, setIsWordWrap] = useState(true); // Por defecto ajustado a pantalla
   
   // Gestión de historial para deshacer
   const [history, setHistory] = useState<string[]>([]);
@@ -27,19 +28,20 @@ const Editor: React.FC<EditorProps> = ({ note, showLineNumbers, onToggleLineNumb
     setContent(note.content);
     setTitle(note.title);
     setLastSaved(new Date(note.updated_at));
-    setHistory([note.content]); // Reiniciar historial al cambiar de nota
+    setHistory([note.content]);
   }, [note.id]);
 
-  // Aplicar Prism highlighting siempre que cambie el contenido
+  // Aplicar Prism highlighting
   useEffect(() => {
     const prism = (window as any).Prism;
     if (prism) {
       prism.highlightAll();
     }
-  }, [content, note.id]);
+  }, [content, note.id, isWordWrap]); // Recalcular al cambiar wrap para evitar saltos
 
   const handleScroll = () => {
     if (textareaRef.current && preRef.current) {
+      // Sincronizar scroll vertical y horizontal
       preRef.current.scrollTop = textareaRef.current.scrollTop;
       preRef.current.scrollLeft = textareaRef.current.scrollLeft;
       if (lineNumbersRef.current) {
@@ -50,13 +52,9 @@ const Editor: React.FC<EditorProps> = ({ note, showLineNumbers, onToggleLineNumb
 
   const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const val = e.target.value;
-    
-    // Guardar en el historial cada vez que hay un cambio significativo (por ejemplo, espacio o nueva línea)
-    // o simplemente mantener una pila de los últimos estados.
     if (val !== content) {
       setHistory(prev => {
         const newHistory = [...prev, content];
-        // Limitar historial a los últimos 50 estados para eficiencia
         return newHistory.slice(-50);
       });
       setContent(val);
@@ -69,7 +67,6 @@ const Editor: React.FC<EditorProps> = ({ note, showLineNumbers, onToggleLineNumb
     if (history.length > 0) {
       const previousState = history[history.length - 1];
       const newHistory = history.slice(0, -1);
-      
       setHistory(newHistory);
       setContent(previousState);
       onUpdate(note.id, { content: previousState });
@@ -109,6 +106,7 @@ const Editor: React.FC<EditorProps> = ({ note, showLineNumbers, onToggleLineNumb
 
   const lines = content.split('\n');
   const langClass = getLanguage();
+  const wrapClass = isWordWrap ? 'wrap-on' : 'wrap-off';
 
   return (
     <div className="flex flex-col h-full bg-white">
@@ -150,6 +148,16 @@ const Editor: React.FC<EditorProps> = ({ note, showLineNumbers, onToggleLineNumb
           </button>
           
           <div className="w-px h-6 bg-slate-100 mx-1"></div>
+
+          <button
+            onClick={() => setIsWordWrap(!isWordWrap)}
+            className={`p-2 rounded-lg transition-all ${isWordWrap ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-100'}`}
+            title={isWordWrap ? "Desactivar Ajuste de Línea" : "Activar Ajuste de Línea"}
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h10M4 18h16" />
+            </svg>
+          </button>
 
           <button
             onClick={downloadNote}
@@ -196,10 +204,10 @@ const Editor: React.FC<EditorProps> = ({ note, showLineNumbers, onToggleLineNumb
           </div>
         )}
         
-        <div className="editor-container mono-font">
+        <div className="editor-container">
           <textarea
             ref={textareaRef}
-            className="editor-textarea hide-scrollbar"
+            className={`editor-textarea ${wrapClass}`}
             value={content}
             onChange={handleContentChange}
             onScroll={handleScroll}
@@ -208,7 +216,7 @@ const Editor: React.FC<EditorProps> = ({ note, showLineNumbers, onToggleLineNumb
           />
           <pre 
             ref={preRef}
-            className="editor-highlight hide-scrollbar"
+            className={`editor-highlight ${wrapClass}`}
             aria-hidden="true"
           >
             <code className={langClass}>
@@ -218,10 +226,10 @@ const Editor: React.FC<EditorProps> = ({ note, showLineNumbers, onToggleLineNumb
         </div>
 
         {/* Floating status */}
-        <div className="absolute bottom-4 right-6 flex items-center space-x-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full border border-slate-200 shadow-md text-[10px] text-slate-700 font-bold z-20">
+        <div className="absolute bottom-4 right-8 flex items-center space-x-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full border border-slate-200 shadow-md text-[10px] text-slate-700 font-bold z-20">
           <span className="text-indigo-600">{langClass.replace('language-', '').toUpperCase()}</span>
+          <span>{isWordWrap ? "Ajustado" : "Original"}</span>
           <span>{content.length} caracteres</span>
-          <span>{content.split(/\s+/).filter(x => x).length} palabras</span>
         </div>
       </div>
     </div>
