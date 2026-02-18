@@ -23,73 +23,81 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markup.min.js"></script>
 
     <style>
-        body { font-family: 'Inter', sans-serif; }
+        body { font-family: 'Inter', sans-serif; margin: 0; padding: 0; height: 100vh; }
         .mono-font { font-family: 'JetBrains Mono', monospace; }
 
-        /* Estilos base del Editor */
-        .editor-container {
+        .editor-wrapper {
             position: relative;
-            width: 100%;
+            flex: 1;
             height: 100%;
-            overflow: hidden;
             background: white;
+            display: flex;
         }
 
-        /* Comparten propiedades EXACTAS para evitar desalineación */
-        .editor-textarea, .editor-highlight {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            padding: 1.5rem;
-            margin: 0;
-            border: 0;
-            font-size: 14px;
-            line-height: 1.625rem;
+        /* CAPAS DE TEXTO: Deben ser IDÉNTICAS en cada propiedad de fuente y espaciado */
+        .shared-editor-styles {
+            margin: 0 !important;
+            border: 0 !important;
+            padding: 1.5rem !important;
+            font-size: 14px !important;
+            line-height: 1.625rem !important; /* Altura de línea fija para sincronización */
             font-family: 'JetBrains Mono', monospace !important;
-            box-sizing: border-box;
-            tab-size: 4;
-            -moz-tab-size: 4;
+            tab-size: 4 !important;
+            -moz-tab-size: 4 !important;
+            box-sizing: border-box !important;
+            width: 100% !important;
+            height: 100% !important;
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
         }
 
+        /* TEXTAREA: Capa interactiva superior */
         .editor-textarea {
-            color: transparent;
-            background: transparent;
-            caret-color: #000;
-            z-index: 2;
-            resize: none;
-            outline: none;
-            overflow: auto; /* Permite scroll nativo */
+            color: transparent !important;
+            background: transparent !important;
+            caret-color: #000 !important;
+            z-index: 2 !important;
+            resize: none !important;
+            outline: none !important;
+            overflow: auto !important; /* Barras de scroll siempre habilitadas si exceden */
+            white-space: pre !important; /* Por defecto original */
+        }
+        
+        /* Asegurar que la selección se vea (algunos navegadores ocultan selección si el color es transparent) */
+        .editor-textarea::selection {
+            background-color: rgba(79, 70, 229, 0.2) !important;
+            color: transparent !important;
         }
 
+        /* PRE/CODE: Capa visual inferior */
         .editor-highlight {
-            z-index: 1;
-            pointer-events: none;
-            background-color: white;
-            color: #000;
-            overflow: hidden; /* Sincronizado por JS */
+            z-index: 1 !important;
+            pointer-events: none !important;
+            background-color: white !important;
+            color: #000 !important;
+            overflow: hidden !important; /* Sincronizado por JavaScript */
+            white-space: pre !important;
         }
 
-        /* Clases para ajuste de línea */
+        /* CONFIGURACIÓN DE AJUSTE DE LÍNEA (WORD WRAP) */
         .wrap-on {
             white-space: pre-wrap !important;
             word-wrap: break-word !important;
-            word-break: break-all !important;
+            overflow-x: hidden !important; /* No hay scroll horizontal en modo ajustado */
         }
         .wrap-off {
             white-space: pre !important;
             word-wrap: normal !important;
-            word-break: normal !important;
         }
 
-        /* Sincronización de padding con números de línea */
+        /* ESPACIADO PARA NÚMEROS DE LÍNEA */
         .with-line-numbers .editor-textarea, 
         .with-line-numbers .editor-highlight {
-            padding-left: 4.5rem;
+            padding-left: 4.5rem !important;
         }
 
-        /* Estilos de Prism ajustados */
+        /* AJUSTES PRISM PARA ALINEACIÓN PIXEL-PERFECT */
         code[class*="language-"], pre[class*="language-"] {
             margin: 0 !important;
             padding: 0 !important;
@@ -99,36 +107,36 @@
             font-size: inherit !important;
             line-height: inherit !important;
             white-space: inherit !important;
-            word-spacing: normal !important;
             word-break: inherit !important;
-            word-wrap: inherit !important;
-            color: #000 !important;
+            color: inherit !important;
         }
 
-        /* Colores de resaltado para alto contraste */
-        .token.comment { color: #707070; }
-        .token.string { color: #008000; }
-        .token.keyword { color: #0000ff; font-weight: bold; }
-        .token.function { color: #a31515; }
-        .token.number { color: #098658; }
-        .token.operator { color: #000; }
-
-        /* Scrollbars elegantes pero visibles */
+        /* BARRAS DE DESPLAZAMIENTO VISIBLES */
         .editor-textarea::-webkit-scrollbar {
-            width: 10px;
-            height: 10px;
+            width: 12px;
+            height: 12px;
         }
         .editor-textarea::-webkit-scrollbar-track {
-            background: #f8fafc;
+            background: #f1f5f9;
         }
         .editor-textarea::-webkit-scrollbar-thumb {
-            background: #e2e8f0;
-            border-radius: 5px;
-            border: 2px solid #f8fafc;
+            background: #cbd5e1;
+            border-radius: 6px;
+            border: 3px solid #f1f5f9;
         }
         .editor-textarea::-webkit-scrollbar-thumb:hover {
-            background: #cbd5e1;
+            background: #94a3b8;
         }
+
+        /* Resaltado de sintaxis */
+        .token.comment { color: #6a737d; font-style: italic; }
+        .token.string { color: #032f62; }
+        .token.keyword { color: #d73a49; font-weight: 600; }
+        .token.function { color: #6f42c1; }
+        .token.number { color: #005cc5; }
+        .token.operator { color: #d73a49; }
+        .token.tag { color: #22863a; }
+        .token.attr-name { color: #6f42c1; }
     </style>
 <script type="importmap">
 {
