@@ -13,115 +13,90 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     
-    <!-- PrismJS -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" rel="stylesheet" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
-
     <style>
-        body { font-family: 'Inter', sans-serif; overflow: hidden; height: 100vh; margin: 0; background-color: #ffffff; }
+        body { font-family: 'Inter', sans-serif; overflow: hidden; height: 100vh; margin: 0; background-color: #f8fafc; }
         
-        .editor-scroller {
+        .editor-container {
+            display: flex;
             height: 100%;
             width: 100%;
-            overflow-y: auto;
-            overflow-x: hidden;
-            display: flex;
+            background: white;
             position: relative;
+            overflow: hidden;
         }
 
-        /* Barra de números con altura de línea idéntica */
-        .line-numbers-sidebar {
+        /* Barra de números lateral */
+        .line-numbers {
             width: 50px;
-            padding-top: 30px;
-            background-color: #f8fafc;
+            background-color: #f1f5f9;
             border-right: 1px solid #e2e8f0;
-            color: #cbd5e1;
+            color: #94a3b8;
             text-align: right;
             padding-right: 12px;
+            padding-top: 30px;
             font-family: 'JetBrains Mono', monospace;
-            font-size: 13px;
-            line-height: 24px; 
+            font-size: 14px;
+            line-height: 26px; /* Debe coincidir exactamente con el textarea */
             user-select: none;
+            overflow: hidden;
             flex-shrink: 0;
-            z-index: 10;
         }
 
-        /* Contenedor maestro con padding fijo */
-        .editor-workspace {
-            position: relative;
+        /* El Editor Real */
+        .notepad-editor {
             flex-grow: 1;
-            min-height: 100%;
-            padding: 30px 40px 100px 30px; /* Aquí se define el espacio */
+            padding: 30px 40px 100px 30px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            line-height: 26px;
+            color: #1e293b;
             background: white;
-        }
-
-        /* RESET ABSOLUTO PARA AMBAS CAPAS */
-        .editor-layer {
-            margin: 0 !important;
-            padding: 0 !important; /* El padding lo hereda del workspace */
-            border: 0 !important;
-            outline: 0 !important;
-            font-family: 'JetBrains Mono', monospace !important;
-            font-size: 15px !important;
-            line-height: 24px !important;
-            tab-size: 4 !important;
-            box-sizing: border-box !important;
-            width: 100% !important;
-            position: absolute !important;
-            top: 30px !important;  /* Debe coincidir con el padding-top del workspace */
-            left: 30px !important; /* Debe coincidir con el padding-left del workspace */
-            display: block !important;
-            white-space: pre-wrap !important;
-            word-wrap: break-word !important;
-            overflow: hidden !important;
-            
-            /* BLOQUEO DE RENDERIZADO PARA EVITAR DERIVA */
-            font-kerning: none !important;
-            font-variant-ligatures: none !important;
-            letter-spacing: 0px !important;
-            -webkit-font-smoothing: antialiased !important;
-            -moz-osx-font-smoothing: grayscale !important;
-            text-rendering: optimizeSpeed !important;
-        }
-
-        /* CAPA SUPERIOR: TEXTAREA */
-        .editor-textarea {
-            z-index: 2;
-            color: transparent !important;
-            background: transparent !important;
-            caret-color: #4f46e5;
+            border: none;
+            outline: none;
             resize: none;
-            -webkit-text-fill-color: transparent;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-y: auto;
+            overflow-x: hidden;
+            tab-size: 4;
+            -webkit-font-smoothing: antialiased;
         }
 
-        /* CAPA INFERIOR: PRISM */
-        .editor-pre {
-            z-index: 1;
-            pointer-events: none;
-            color: #334155;
-            background: transparent !important;
+        /* Personalización de la selección */
+        .notepad-editor::selection {
+            background-color: #c7d2fe;
+            color: #1e1b4b;
         }
 
-        /* SOLUCIÓN AL TEXTO FANTASMA Y TAMAÑO EN SELECCIÓN:
-           Al seleccionar, el textarea se vuelve opaco y sólido para tapar la capa inferior. */
-        .editor-textarea::selection {
-            background-color: #dbeafe !important;
-            color: #1e293b !important;
-            -webkit-text-fill-color: #1e293b !important;
+        /* Scrollbar minimalista */
+        .notepad-editor::-webkit-scrollbar {
+            width: 8px;
         }
-
-        /* Resaltado Prism */
-        .token.comment { color: #94a3b8; font-style: italic; }
-        .token.string { color: #0891b2; }
-        .token.keyword { color: #e11d48; font-weight: 600; }
-        .token.function { color: #7c3aed; }
-        .token.number { color: #2563eb; }
-
-        .editor-scroller::-webkit-scrollbar { width: 8px; }
-        .editor-scroller::-webkit-scrollbar-track { background: transparent; }
-        .editor-scroller::-webkit-scrollbar-thumb { 
-            background: #e2e8f0; 
+        .notepad-editor::-webkit-scrollbar-track {
+            background: #f8fafc;
+        }
+        .notepad-editor::-webkit-scrollbar-thumb {
+            background: #e2e8f0;
             border-radius: 10px;
+        }
+        .notepad-editor::-webkit-scrollbar-thumb:hover {
+            background: #cbd5e1;
+        }
+
+        .status-pill {
+            position: absolute;
+            bottom: 24px;
+            right: 32px;
+            background: #0f172a;
+            color: white;
+            padding: 6px 16px;
+            border-radius: 99px;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            z-index: 50;
+            pointer-events: none;
         }
     </style>
 <script type="importmap">
@@ -136,7 +111,7 @@
 </script>
 <link rel="stylesheet" href="/index.css">
 </head>
-<body class="bg-white">
+<body>
     <div id="root"></div>
 <script type="module" src="/index.tsx"></script>
 </body>
