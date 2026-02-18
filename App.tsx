@@ -13,7 +13,7 @@ const App: React.FC = () => {
 
   useEffect(() => {
     if (!isSupabaseConfigured) {
-      setConfigError("Supabase is not configured. Please ensure SUPABASE_URL and SUPABASE_ANON_KEY are set in your environment variables.");
+      setConfigError("Supabase no está configurado correctamente. Por favor, verifica que las variables SUPABASE_URL y SUPABASE_ANON_KEY estén configuradas en tu proyecto de Vercel.");
       setLoading(false);
       return;
     }
@@ -27,9 +27,9 @@ const App: React.FC = () => {
           setUser({ id: session.user.id, email: session.user.email || '' });
         }
       } catch (err: any) {
-        console.error('Supabase session check failed:', err);
+        console.error('Error al verificar sesión de Supabase:', err);
         if (err.message === 'Failed to fetch') {
-          setConfigError("Unable to connect to Supabase. Please check your internet connection and verify that SUPABASE_URL is correct.");
+          setConfigError("No se pudo conectar con Supabase. Verifica tu conexión a internet o que la URL de Supabase sea correcta.");
         }
       } finally {
         setLoading(false);
