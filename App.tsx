@@ -13,7 +13,7 @@ const App: React.FC = () => {
 
   useEffect(() => {
     if (!isSupabaseConfigured) {
-      setConfigError("Supabase is not configured. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in your environment variables.");
+      setConfigError("Supabase is not configured. Please ensure SUPABASE_URL and SUPABASE_ANON_KEY are set in your environment variables.");
       setLoading(false);
       return;
     }
@@ -28,9 +28,8 @@ const App: React.FC = () => {
         }
       } catch (err: any) {
         console.error('Supabase session check failed:', err);
-        // If it's a fetch error, it might be a temporary network issue or invalid URL
         if (err.message === 'Failed to fetch') {
-          setConfigError("Unable to connect to Supabase. Please check your internet connection and Supabase URL configuration.");
+          setConfigError("Unable to connect to Supabase. Please check your internet connection and verify that SUPABASE_URL is correct.");
         }
       } finally {
         setLoading(false);
@@ -67,13 +66,13 @@ const App: React.FC = () => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
           </div>
-          <h2 className="text-xl font-bold text-slate-900 mb-2">Connection Error</h2>
+          <h2 className="text-xl font-bold text-slate-900 mb-2">Configuración Requerida</h2>
           <p className="text-slate-600 mb-6">{configError}</p>
           <button 
             onClick={() => window.location.reload()}
             className="w-full bg-indigo-600 text-white py-2 rounded-lg font-medium hover:bg-indigo-700 transition-colors"
           >
-            Retry Connection
+            Reintentar Conexión
           </button>
         </div>
       </div>
