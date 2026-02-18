@@ -15,6 +15,10 @@ const Editor: React.FC<EditorProps> = ({ note, showLineNumbers, onToggleLineNumb
   const [title, setTitle] = useState(note.title);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date>(new Date(note.updated_at));
+  
+  // Gestión de historial para deshacer
+  const [history, setHistory] = useState<string[]>([]);
+  
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const preRef = useRef<HTMLPreElement>(null);
   const lineNumbersRef = useRef<HTMLDivElement>(null);
@@ -23,10 +27,10 @@ const Editor: React.FC<EditorProps> = ({ note, showLineNumbers, onToggleLineNumb
     setContent(note.content);
     setTitle(note.title);
     setLastSaved(new Date(note.updated_at));
+    setHistory([note.content]); // Reiniciar historial al cambiar de nota
   }, [note.id]);
 
-  // Apply Prism highlighting whenever content changes
-  // Fix: Use (window as any).Prism to bypass TypeScript error on the window object
+  // Aplicar Prism highlighting siempre que cambie el contenido
   useEffect(() => {
     const prism = (window as any).Prism;
     if (prism) {
@@ -46,15 +50,37 @@ const Editor: React.FC<EditorProps> = ({ note, showLineNumbers, onToggleLineNumb
 
   const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const val = e.target.value;
-    setContent(val);
-    onUpdate(note.id, { content: val });
-    setLastSaved(new Date());
+    
+    // Guardar en el historial cada vez que hay un cambio significativo (por ejemplo, espacio o nueva línea)
+    // o simplemente mantener una pila de los últimos estados.
+    if (val !== content) {
+      setHistory(prev => {
+        const newHistory = [...prev, content];
+        // Limitar historial a los últimos 50 estados para eficiencia
+        return newHistory.slice(-50);
+      });
+      setContent(val);
+      onUpdate(note.id, { content: val });
+      setLastSaved(new Date());
+    }
+  };
+
+  const handleUndo = () => {
+    if (history.length > 0) {
+      const previousState = history[history.length - 1];
+      const newHistory = history.slice(0, -1);
+      
+      setHistory(newHistory);
+      setContent(previousState);
+      onUpdate(note.id, { content: previousState });
+      setLastSaved(new Date());
+    }
   };
 
   const handleTitleBlur = () => {
     setIsEditingTitle(false);
     if (title !== note.title) {
-      onUpdate(note.id, { title: title || 'Untitled Note' });
+      onUpdate(note.id, { title: title || 'Nota sin título' });
     }
   };
 
@@ -62,20 +88,18 @@ const Editor: React.FC<EditorProps> = ({ note, showLineNumbers, onToggleLineNumb
     const element = document.createElement("a");
     const file = new Blob([content], { type: 'text/plain' });
     element.href = URL.createObjectURL(file);
-    element.download = `${title.replace(/\s+/g, '_') || 'note'}.txt`;
+    element.download = `${title.replace(/\s+/g, '_') || 'nota'}.txt`;
     document.body.appendChild(element);
     element.click();
     document.body.removeChild(element);
   };
 
-  // Detect language based on title or content
   const getLanguage = () => {
     const lowerTitle = title.toLowerCase();
     if (lowerTitle.endsWith('.html') || lowerTitle.endsWith('.htm')) return 'language-markup';
     if (lowerTitle.endsWith('.css')) return 'language-css';
     if (lowerTitle.endsWith('.js') || lowerTitle.endsWith('.ts')) return 'language-javascript';
     
-    // Fallback detection by looking at content snippets
     if (content.trim().startsWith('<!DOCTYPE html>') || content.includes('</html>')) return 'language-markup';
     if (content.includes('const ') || content.includes('function ') || content.includes('=>')) return 'language-javascript';
     if (content.includes('{') && content.includes('}') && (content.includes('margin:') || content.includes('color:'))) return 'language-css';
@@ -94,7 +118,7 @@ const Editor: React.FC<EditorProps> = ({ note, showLineNumbers, onToggleLineNumb
           {isEditingTitle ? (
             <input
               autoFocus
-              className="text-lg font-bold text-slate-800 border-b-2 border-indigo-600 focus:outline-none w-full bg-transparent"
+              className="text-lg font-bold text-slate-900 border-b-2 border-indigo-600 focus:outline-none w-full bg-transparent"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               onBlur={handleTitleBlur}
@@ -102,39 +126,54 @@ const Editor: React.FC<EditorProps> = ({ note, showLineNumbers, onToggleLineNumb
             />
           ) : (
             <h2 
-              className="text-lg font-bold text-slate-800 truncate cursor-pointer hover:text-indigo-600 transition-colors"
+              className="text-lg font-bold text-slate-900 truncate cursor-pointer hover:text-indigo-600 transition-colors"
               onClick={() => setIsEditingTitle(true)}
             >
               {title}
             </h2>
           )}
           <span className="ml-4 text-[10px] text-slate-400 whitespace-nowrap hidden sm:inline font-medium">
-            Auto-guardado: {lastSaved.toLocaleTimeString()}
+            Guardado: {lastSaved.toLocaleTimeString()}
           </span>
         </div>
 
-        <div className="flex items-center space-x-2 ml-4">
+        <div className="flex items-center space-x-1 ml-4">
+          <button
+            onClick={handleUndo}
+            disabled={history.length === 0}
+            className={`p-2 rounded-lg transition-all ${history.length === 0 ? 'text-slate-200 cursor-not-allowed' : 'text-slate-500 hover:text-amber-600 hover:bg-amber-50'}`}
+            title="Deshacer (Ctrl+Z)"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l5 5m-5-5l5-5" />
+            </svg>
+          </button>
+          
+          <div className="w-px h-6 bg-slate-100 mx-1"></div>
+
           <button
             onClick={downloadNote}
-            className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
+            className="p-2 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
             title="Descargar (.txt)"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
             </svg>
           </button>
+          
           <button
             onClick={onToggleLineNumbers}
-            className={`p-2 rounded-lg transition-all ${showLineNumbers ? 'bg-indigo-100 text-indigo-700' : 'text-slate-400 hover:bg-slate-100'}`}
+            className={`p-2 rounded-lg transition-all ${showLineNumbers ? 'bg-indigo-100 text-indigo-700' : 'text-slate-500 hover:bg-slate-100'}`}
             title="Números de línea"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
             </svg>
           </button>
+          
           <button
             onClick={() => onDelete(note.id)}
-            className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+            className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
             title="Eliminar Nota"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -149,7 +188,7 @@ const Editor: React.FC<EditorProps> = ({ note, showLineNumbers, onToggleLineNumb
         {showLineNumbers && (
           <div 
             ref={lineNumbersRef}
-            className="w-12 bg-slate-50 text-slate-300 py-6 text-right pr-3 select-none mono-font text-xs overflow-hidden border-r border-slate-100 z-10"
+            className="w-12 bg-slate-50 text-slate-400 py-6 text-right pr-3 select-none mono-font text-xs overflow-hidden border-r border-slate-100 z-10 font-bold"
           >
             {lines.map((_, i) => (
               <div key={i} className="leading-[1.625rem] h-[1.625rem]">{i + 1}</div>
@@ -164,7 +203,7 @@ const Editor: React.FC<EditorProps> = ({ note, showLineNumbers, onToggleLineNumb
             value={content}
             onChange={handleContentChange}
             onScroll={handleScroll}
-            placeholder="Empieza a escribir tu nota aquí..."
+            placeholder="Empieza a escribir..."
             spellCheck={false}
           />
           <pre 
@@ -179,7 +218,7 @@ const Editor: React.FC<EditorProps> = ({ note, showLineNumbers, onToggleLineNumb
         </div>
 
         {/* Floating status */}
-        <div className="absolute bottom-4 right-6 flex items-center space-x-4 bg-white/80 backdrop-blur-sm px-3 py-1 rounded-full border border-slate-200 shadow-sm text-[10px] text-slate-500 font-medium z-20">
+        <div className="absolute bottom-4 right-6 flex items-center space-x-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full border border-slate-200 shadow-md text-[10px] text-slate-700 font-bold z-20">
           <span className="text-indigo-600">{langClass.replace('language-', '').toUpperCase()}</span>
           <span>{content.length} caracteres</span>
           <span>{content.split(/\s+/).filter(x => x).length} palabras</span>
