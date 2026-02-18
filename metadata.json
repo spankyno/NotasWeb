@@ -1,0 +1,5 @@
+{
+  "name": "QuickNotes Pro",
+  "description": "A high-performance, secure, and minimalist note-taking application featuring cloud sync, daily quotas, calendar integration, and a tabbed interface.",
+  "requestFramePermissions": []
+}
