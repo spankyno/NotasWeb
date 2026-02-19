@@ -3,7 +3,7 @@ name: Keep Supabase Alive Notas Web
 on:
   schedule:
     # Se ejecuta cada 3 días a las 00:00 UTC
-    - cron: '0 0 */3 * *'
+   - cron: '0 0 */5 * *' # Se ejecuta a las 00:00 cada 5 días
   workflow_dispatch: # Permite ejecutarlo manualmente para probar
 
 jobs:
